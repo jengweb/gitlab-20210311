@@ -58,9 +58,53 @@ sudo mv sonarqube-8.7 /opt/sonarqube
 
 sudo useradd sonar
 sudo chown -R sonar:sonar /opt/sonarqube
+```
 
+#### Then create the file /etc/systemd/system/sonarqube.service based on the following ####
+```
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=sonar
+Group=sonar
+PermissionsStartOnly=true
+ExecStart=/bin/nohup /usr/bin/java -Xms32m -Xmx32m -Djava.net.preferIPv4Stack=true -jar /opt/sonarqube/lib/sonar-application-8.7.0.41497.jar
+StandardOutput=syslog
+LimitNOFILE=131072
+LimitNPROC=8192
+TimeoutStartSec=5
+Restart=always
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+sudo systemctl enable sonarqube.service
+sudo systemctl start sonarqube.service
+```
+
+```
 sudo su - sonar
 cd /opt/sonarqube
 ./bin/linux-x86-64/sonar.sh start
+
+```
+
+### Scan Code by Maven ###
+Create Project from SonarQube
+```
+./mvnw clean test   
+
+./mvnw clean package
+
+mvn sonar:sonar \
+  -Dsonar.projectKey=[Project Name] \
+  -Dsonar.host.url=http://[SonarQube Server]:9000 \
+  -Dsonar.login=[Project Token]
 
 ```
